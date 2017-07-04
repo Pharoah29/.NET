@@ -176,7 +176,11 @@ namespace Utils.Classes
 
                 doc.Close();
 
-                return output.ToArray();
+                byte[] arrOutput = output.ToArray();
+
+                output.Close();
+
+                return arrOutput;
 
             }
 
