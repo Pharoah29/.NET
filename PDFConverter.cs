@@ -16,17 +16,17 @@ using iTextSharp.tool.xml.pipeline.css;
 using iTextSharp.tool.xml.parser;
 using iTextSharp.text.html.simpleparser;
 
-namespace Utils.Classes
+namespace Utils.Classes.PDF
 {
     /// <summary>
     /// Converts html or plain text to a PDF stream,
     /// handles hebrew (UTF-8) formatting
     /// </summary>
     /// <example>
-    /// byte[] data = PDFConverter.LoadFiles(files);
-    /// byte[] data = PDFConverter.LoadFromFile(file);
-    /// byte[] data = PDFConverter.LoadText(html)
-    /// PDFConverter.Render(data); 
+    /// PDFOutput pdf = PDFConverter.LoadFiles(files);
+    /// PDFOutput pdf = PDFConverter.LoadFromFile(file);
+    /// PDFOutput pdf = PDFConverter.LoadText(html)
+    /// PDFConverter.Render(pdf); 
     /// </example> 
     public class PDFConverter
     {
@@ -36,7 +36,7 @@ namespace Utils.Classes
         /// </summary>
         /// <param name="filePath">Specify the file path</param>
         /// <returns></returns>
-        public static byte[] LoadFromFile(string filePath)
+        public static PDFOutput LoadFromFile(string filePath)
         {
 
             StreamReader srPDF = new StreamReader(filePath, Encoding.UTF8);
@@ -47,16 +47,23 @@ namespace Utils.Classes
 
             string htmlText = CreateHTMLBody(text);
 
-            return Convert(htmlText);
+            PDFOutput output = new PDFOutput
+            {
+                FileName = DateTime.Now.Ticks + ".pdf",
 
-        }
+                Data = Convert(htmlText)
+            };
+
+
+           return output;
+       }
 
         /// <summary>
         /// Load an array of HTML files to convert
         /// </summary>
         /// <param name="filePaths">Specify an array of files to convert</param>
         /// <returns>The binary data of the combined files</returns>
-        public static byte[] LoadFiles(string[] filePaths)
+        public static PDFOutput LoadFiles(string[] filePaths)
         {
 
             StringBuilder sbHtml = new StringBuilder();
@@ -73,7 +80,15 @@ namespace Utils.Classes
             }
 
 
-            return Convert(sbHtml.ToString());
+            PDFOutput output = new PDFOutput
+            {
+                FileName = DateTime.Now.Ticks + ".pdf",
+
+                Data = Convert(sbHtml.ToString())
+            };
+
+
+            return output;
 
         }
 
@@ -82,11 +97,18 @@ namespace Utils.Classes
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        public static byte[] LoadText(string text)
+        public static PDFOutput LoadText(string text)
         {
             string htmlText = CreateHTMLBody(text);
 
-            return Convert(htmlText);
+            PDFOutput output = new PDFOutput
+            {
+                FileName = DateTime.Now.Ticks + ".pdf",
+
+                Data = Convert(htmlText)
+            };
+
+            return output;
 
         }
 
@@ -95,24 +117,20 @@ namespace Utils.Classes
         /// </summary>
         /// <param name="data"></param>
         /// <param name="outputFilename"></param>
-        public static void Render(byte[] data, string outputFilename = "")
+        public static void Render(PDFOutput pdf)
         {
-            if (outputFilename == string.Empty)
-            {
-                outputFilename = DateTime.Now.Ticks + ".pdf";
-
-            }
-
+           
             HttpContext.Current.Response.ClearContent();
             HttpContext.Current.Response.ClearHeaders();
             HttpContext.Current.Response.ContentType = "application/pdf";
-            HttpContext.Current.Response.AddHeader("Content-Disposition", "attachment; filename=" + outputFilename);
+            HttpContext.Current.Response.AddHeader("Content-Disposition", "attachment; filename=" + pdf.FileName);
 
-            HttpContext.Current.Response.BinaryWrite(data);
+            HttpContext.Current.Response.BinaryWrite(pdf.Data);
             HttpContext.Current.Response.End();
             HttpContext.Current.Response.Flush();
             HttpContext.Current.Response.Clear();
         }
+
 
         private static string CreateHTMLBody(string html)
         {
@@ -186,5 +204,12 @@ namespace Utils.Classes
 
         }
 
+    }
+
+    public class PDFOutput
+    {
+        public string FileName { get; set; }
+
+        public byte[] Data { get; set; }
     }
 }
